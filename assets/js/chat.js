@@ -4,9 +4,14 @@ $(document).ready(function() {
 
     $('#blah').hide()
 
-    // **********************
+    // *******************************************
     // Part 1: Upload photos 
-    // **********************
+    // *******************************************
+
+
+        // **********************
+        // Retrieving uploaded image:
+        // **********************
 
     // Get uploaded file
     const inputElement = document.getElementById("myFile");
@@ -32,6 +37,10 @@ $(document).ready(function() {
         console.log(atob(photofile))
     }
 
+        // **********************
+        // Caption generation
+        // **********************
+
     // Display captions already inputted
     document.getElementById("submitlabels").onclick = function() {
         console.log("activated!")
@@ -46,6 +55,11 @@ $(document).ready(function() {
         document.getElementById("list").appendChild(list_item);
     }
 
+
+        // **********************
+        // Upload to S3
+        // **********************
+
     // Package captions and submit to API Gateway
     document.getElementById("submitphoto").onclick = function() {
         // Grab photo
@@ -56,24 +70,20 @@ $(document).ready(function() {
         processed_photo = reader.readAsDataURL(photo)
         processed_photo = reader.result
 
-        // var reader = new FileReader();
-
-        // reader.onload = function (e) {
-        //     $('#blah2')
-        //         .attr('src', e.target.result)
-        //         .width($(window).width() * .15);
-        //         // .height(180);
-        // };
-
         // reader.readAsDataURL(fileList[0]);
-        labels = [];
+        label = ''
         list = document.getElementById("list").getElementsByTagName('li');
         for(var i=0;i < list.length; i++) {
             // var arrValue = list[i].innerHTML;
             // alert(arrValue);
-            labels.push(list[i].innerHTML);
+            // console.log(typeof list[i].innerText)
+            // console.log(typeof list[i].innerText.toString())
+            label = label + list[i].innerText.toString() + ' '
+            // labels.push(list[i].innerText.toString());
         }
-        console.log(labels)
+        // label = label
+        // console.log(labels)
+        console.log(label)
 
         // Package as header and send to aws below
         // upload_to_AWS(photo, labels, filename)
@@ -81,7 +91,7 @@ $(document).ready(function() {
         // Use S3 ManagedUpload class as it supports multipart uploads
         var albumBucketName = "coms6998-sp21-photobucket";
         var bucketRegion = "us-east-1";
-        var IdentityPoolId= "us-east-1:a2d97868-aa4e-480e-9c50-669411afd088";
+        var IdentityPoolId= "us-east-1:bcdf8d8b-dd78-46c4-afd9-05bfc9139e4e";
 
         AWS.config.update({
             region: bucketRegion,
@@ -94,13 +104,17 @@ $(document).ready(function() {
             apiVersion: "2006-03-01",
             params: { Bucket: albumBucketName }
         });
-
+        // labels = "String test?"
+        // console.log(labels)
+        // labels = ["Sup", "test"]
+        // metadata = {customLabels: "hi"}
         var upload = new AWS.S3.ManagedUpload({
             params: {
                 Bucket: "coms6998-sp21-photobucket",
                 Key: filename,
-                Body: photo
-            }
+                Body: photo,
+                Metadata: {customLabels: label.trim()},
+            },
         });
 
         var promise = upload.promise();
@@ -116,15 +130,18 @@ $(document).ready(function() {
         );
     }
 
-    // **********************
+    // *******************************************
     // Part 2: Search photos 
-    // ********************** 
+    // *******************************************
+
+        // **********************
+        // Search by speech:
+        // **********************
 
     var recognition = new webkitSpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-  
-    // Set up error handlers
+ 
     var speech = []
     var diagnostic = document.querySelector('.output');
     recognition.onnomatch = function(event) {
@@ -166,8 +183,11 @@ $(document).ready(function() {
     document.getElementById("submitspeech").onclick = function() {
         extracted_text = speech[speech.length-1]
         search_from_AWS(extracted_text)
-        
     }
+
+        // **********************
+        // Search by text:
+        // **********************
 
     // Handle Text Search
     document.getElementById("submitsearch").onclick = function() {
@@ -175,16 +195,16 @@ $(document).ready(function() {
         search_from_AWS(extracted_text)
     }
 
-    // **********************
+    // *******************************************
     // Helper Functions:
-    // ********************** 
+    // *******************************************
 
     // Main Driver for uploading to AWS
     function upload_to_AWS(photo, labels, filename){
         // TODO:
         console.log(photo)
         bucket = 'coms6998-sp21-photobucket'
-        response = sdk.uploadPut({"Content-Type":"image/jpg", labels:labels, item:filename},{
+        response = sdk.uploadPut({Accept:"*/*", "Content-Type":"image/jpg", labels:labels, item:filename},{
             body:photo
         },{})
         console.log("Response from API Gateway:" + response)
@@ -200,136 +220,27 @@ $(document).ready(function() {
         console.log("Response from API Gateway:")
         response.then(function(result) {
             labels = result["data"]["Links"]
-            for(var i=0;i < labels.length; i++) {
-                // var arrValue = list[i].innerHTML;
-                // alert(arrValue);
-                appendImage(labels[i])
+            if (labels.length == 0){
+                $("#ResultsSection").html('Sorry, no results found for this search...')
+            }
+            else {
+                for(var i=0;i < labels.length; i++) {
+                    // var arrValue = list[i].innerHTML;
+                    // alert(arrValue);
+                    appendImage(labels[i])
+                }
             }
          })
-
     }
 
     // Helper for extracting search results returned from API Gateway
     // appendImage("https://coms6998-sp21-photobucket.s3.amazonaws.com/img004.jpg")
     function appendImage(photo){
+        $("#ResultsSection").html('')
         var img = $('<img id="dynamic">'); //Equivalent: $(document.createElement('img'))
         img.attr('src', photo);
         img.appendTo('#ResultsSection');
     }
-
-    // AWS Upload from sdk
-    var albumBucketName = "BUCKET_NAME";
-    var bucketRegion = "REGION";
-    var IdentityPoolId = "IDENTITY_POOL_ID";
-
-    AWS.config.update({
-        region: bucketRegion,
-        credentials: new AWS.CognitoIdentityCredentials({
-            IdentityPoolId: IdentityPoolId
-        })
-    });
-
-    var s3 = new AWS.S3({
-        apiVersion: "2006-03-01",
-        params: { Bucket: albumBucketName }
-    });
-
-    // AWS Upload photo straight to album
-    function addPhoto(albumName) {
-        var files = document.getElementById("photoupload").files;
-        if (!files.length) {
-          return alert("Please choose a file to upload first.");
-        }
-        var file = files[0];
-        var fileName = file.name;
-        var albumPhotosKey = encodeURIComponent(albumName) + "/";
-      
-        var photoKey = albumPhotosKey + fileName;
-      
-        // Use S3 ManagedUpload class as it supports multipart uploads
-        var upload = new AWS.S3.ManagedUpload({
-          params: {
-            Bucket: albumBucketName,
-            Key: photoKey,
-            Body: file
-          }
-        });
-      
-        var promise = upload.promise();
-      
-        promise.then(
-          function(data) {
-            alert("Successfully uploaded photo.");
-            viewAlbum(albumName);
-          },
-          function(err) {
-            return alert("There was an error uploading your photo: ", err.message);
-          }
-        );
-      }
-
-// OLD
-  function callChatbotApi(message) {
-    // params, body, additionalParams
-    return sdk.chatbotPost({}, {
-      messages: [{
-        type: 'unstructured',
-        unstructured: {
-          text: message
-        }
-      }]
-    }, {});
-  }
-
-  function insertMessage() {
-    msg = $('.message-input').val();
-    if ($.trim(msg) == '') {
-      return false;
-    }
-    $('<div class="message message-personal">' + msg + '</div>').appendTo($('.mCSB_container')).addClass('new');
-    setDate();
-    $('.message-input').val(null);
-    updateScrollbar();
-
-    callChatbotApi(msg)
-      .then((response) => {
-        console.log(response);
-        var data = response.data;
-
-        if (data.messages && data.messages.length > 0) {
-          console.log('received ' + data.messages.length + ' messages');
-
-          var messages = data.messages;
-
-          for (var message of messages) {
-            if (message.type === 'unstructured') {
-              insertResponseMessage(message.unstructured.text);
-            } else if (message.type === 'structured' && message.structured.type === 'product') {
-              var html = '';
-
-              insertResponseMessage(message.structured.text);
-
-              setTimeout(function() {
-                html = '<img src="' + message.structured.payload.imageUrl + '" witdth="200" height="240" class="thumbnail" /><b>' +
-                  message.structured.payload.name + '<br>$' +
-                  message.structured.payload.price +
-                  '</b><br><a href="#" onclick="' + message.structured.payload.clickAction + '()">' +
-                  message.structured.payload.buttonLabel + '</a>';
-                insertResponseMessage(html);
-              }, 1100);
-            } else {
-              console.log('not implemented');
-            }
-          }
-        } else {
-          insertResponseMessage('Oops, something went wrong. Please try again.');
-        }
-      })
-      .catch((error) => {
-        console.log('an error occurred', error);
-        insertResponseMessage('Oops, something went wrong. Please try again.');
-      });
-  }
 });
 
 //   $(window).load(function() {
