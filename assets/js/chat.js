@@ -89,6 +89,7 @@ $(document).ready(function() {
         // upload_to_AWS(photo, labels, filename)
 
         // Use S3 ManagedUpload class as it supports multipart uploads
+        // This is the bucket name to be used for uploading the images
         var albumBucketName = "index-photos-bucket-b2";
         // var albumBucketName = "";
         var bucketRegion = "us-east-1";
