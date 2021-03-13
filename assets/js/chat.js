@@ -4,6 +4,11 @@ $(document).ready(function() {
 
     $('#blah').hide()
 
+    // AWS SDK Variables
+    var albumBucketName = "coms6998-sp21-photobucket";
+    var bucketRegion = "us-east-1";
+    var IdentityPoolId= "us-east-1:bcdf8d8b-dd78-46c4-afd9-05bfc9139e4e";
+
     // *******************************************
     // Part 1: Upload photos 
     // *******************************************
@@ -89,9 +94,6 @@ $(document).ready(function() {
         // upload_to_AWS(photo, labels, filename)
 
         // Use S3 ManagedUpload class as it supports multipart uploads
-        var albumBucketName = "coms6998-sp21-photobucket";
-        var bucketRegion = "us-east-1";
-        var IdentityPoolId= "us-east-1:bcdf8d8b-dd78-46c4-afd9-05bfc9139e4e";
 
         AWS.config.update({
             region: bucketRegion,
@@ -110,7 +112,7 @@ $(document).ready(function() {
         // metadata = {customLabels: "hi"}
         var upload = new AWS.S3.ManagedUpload({
             params: {
-                Bucket: "coms6998-sp21-photobucket",
+                Bucket: albumBucketName,
                 Key: filename,
                 Body: photo,
                 Metadata: {customLabels: label.trim()},
@@ -192,7 +194,7 @@ $(document).ready(function() {
     // Handle Text Search
     document.getElementById("submitsearch").onclick = function() {
         extracted_text = document.getElementById("search_terms").value
-        search_from_AWS(extracted_text)
+        alt_search_from_AWS(extracted_text)
     }
 
     // *******************************************
@@ -203,7 +205,7 @@ $(document).ready(function() {
     function upload_to_AWS(photo, labels, filename){
         // TODO:
         console.log(photo)
-        bucket = 'coms6998-sp21-photobucket'
+        bucket = albumBucketName
         response = sdk.uploadPut({Accept:"*/*", "Content-Type":"image/jpg", labels:labels, item:filename},{
             body:photo
         },{})
@@ -231,6 +233,52 @@ $(document).ready(function() {
                 }
             }
          })
+    }
+        
+    // Driver for searching from AWS
+    function alt_search_from_AWS(extracted_text){
+        AWS.config.update({
+            region: bucketRegion,
+            credentials: new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: IdentityPoolId
+            })
+        });
+
+        var lambda = new AWS.Lambda({
+            apiVersion: '2015-03-31',
+        });
+        payload = JSON.stringify({ "queryStringParameters":{ "q":extracted_text,},})
+        var params = {
+            FunctionName: "A2-LF2-search-photos", 
+            InvocationType: "RequestResponse", 
+            Payload: payload, 
+           };
+        promise = lambda.invoke(params, function(err, data) {
+            if (err) console.log(err, err.stack); // an error occurred
+            else     console.log(data);           // successful response
+            /*
+            data = {
+             Payload: <Binary String>, 
+             StatusCode: 200
+            }
+            */
+          }).promise();
+        
+        // This is to test that CodePipeline works
+
+        // var promise = invocation.promise();
+
+        promise.then(
+            // console.log(res)
+            function(data) {
+                alert("Got some results back from lambda");
+                    console.log(data);
+                    },
+                function(err) {
+                return alert("There was in invoking LF2 Lambda: ", err.message);
+            }
+        );
+        
     }
 
     // Helper for extracting search results returned from API Gateway
