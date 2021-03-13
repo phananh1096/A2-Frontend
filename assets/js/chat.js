@@ -94,6 +94,12 @@ $(document).ready(function() {
         // upload_to_AWS(photo, labels, filename)
 
         // Use S3 ManagedUpload class as it supports multipart uploads
+        
+        var albumBucketName = "index-photos-bucket-b2";
+        // var albumBucketName = "";
+        var bucketRegion = "us-east-1";
+        var IdentityPoolId = "us-east-1:3ae2d6e8-7a05-4b58-8d3a-0209b5a095f0";
+        // var IdentityPoolId= "us-east-1:bcdf8d8b-dd78-46c4-afd9-05bfc9139e4e";
 
         AWS.config.update({
             region: bucketRegion,
@@ -205,7 +211,7 @@ $(document).ready(function() {
     function upload_to_AWS(photo, labels, filename){
         // TODO:
         console.log(photo)
-        bucket = albumBucketName
+        bucket = albumBucketName;
         response = sdk.uploadPut({Accept:"*/*", "Content-Type":"image/jpg", labels:labels, item:filename},{
             body:photo
         },{})
