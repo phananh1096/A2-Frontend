@@ -200,7 +200,8 @@ $(document).ready(function() {
     // Handle Text Search
     document.getElementById("submitsearch").onclick = function() {
         extracted_text = document.getElementById("search_terms").value
-        alt_search_from_AWS(extracted_text)
+        // alt_search_from_AWS(extracted_text)
+        search_from_AWS(extracted_text)
     }
 
     // *******************************************
