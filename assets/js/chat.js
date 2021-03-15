@@ -5,7 +5,8 @@ $(document).ready(function() {
     $('#blah').hide()
 
     // AWS SDK Variables
-    var albumBucketName = "coms6998-sp21-photobucket";
+    // var albumBucketName = "coms6998-sp21-photobucket";
+    var albumBucketName = "index-photos-bucket-b2";
     var bucketRegion = "us-east-1";
     var IdentityPoolId= "us-east-1:bcdf8d8b-dd78-46c4-afd9-05bfc9139e4e";
 
