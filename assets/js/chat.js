@@ -234,9 +234,11 @@ $(document).ready(function() {
                 $("#ResultsSection").html('Sorry, no results found for this search...')
             }
             else {
+                $("#ResultsSection").html('')
                 for(var i=0;i < labels.length; i++) {
                     // var arrValue = list[i].innerHTML;
                     // alert(arrValue);
+                    console.log(labels[i])
                     appendImage(labels[i])
                 }
             }
@@ -292,8 +294,7 @@ $(document).ready(function() {
     // Helper for extracting search results returned from API Gateway
     // appendImage("https://coms6998-sp21-photobucket.s3.amazonaws.com/img004.jpg")
     function appendImage(photo){
-        $("#ResultsSection").html('')
-        var img = $('<img id="dynamic">'); //Equivalent: $(document.createElement('img'))
+        var img = $('<img />'); //Equivalent: $(document.createElement('img'))
         img.attr('src', photo);
         img.appendTo('#ResultsSection');
     }
