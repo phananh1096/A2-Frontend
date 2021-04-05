@@ -22,7 +22,7 @@ apigClientFactory.newClient = function (config) {
             secretKey: '',
             sessionToken: '',
             region: '',
-            apiKey: undefined,
+            apiKey: '',
             defaultContentType: 'application/json',
             defaultAcceptType: 'application/json'
         };
@@ -34,7 +34,7 @@ apigClientFactory.newClient = function (config) {
         config.secretKey = '';
     }
     if(config.apiKey === undefined) {
-        config.apiKey = '';
+        config.apiKey = 'cKLVqUzbNI5x0KfJy4GeY5iOMOOo8wSE5HmEJZhW';
     }
     if(config.sessionToken === undefined) {
         config.sessionToken = '';
@@ -96,8 +96,8 @@ apigClientFactory.newClient = function (config) {
             queryParams: apiGateway.core.utils.parseParametersToObject(params, ['q']),
             body: body
         };
-        
-        
+
+        console.log(config.apiKey)
         return apiGatewayClient.makeRequest(searchGetRequest, authType, additionalParams, config.apiKey);
     };
     

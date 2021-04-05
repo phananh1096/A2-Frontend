@@ -222,11 +222,14 @@ $(document).ready(function() {
 
     // Driver for searching from AWS
     function search_from_AWS(extracted_text){
+        var additionalParams = {
+            headers: {
+                "x-api-key":"cKLVqUzbNI5x0KfJy4GeY5iOMOOo8wSE5HmEJZhW"
+            }
+        }
         console.log("About to send speech off: " + extracted_text)
         // TODO: Format properly
-        response = sdk.searchGet({q:extracted_text},{
-            body:extracted_text
-        },{})
+        response = sdk.searchGet({q:extracted_text},{body:extracted_text},{additionalParams})
         console.log("Response from API Gateway:")
         response.then(function(result) {
             labels = result["data"]["Links"]
